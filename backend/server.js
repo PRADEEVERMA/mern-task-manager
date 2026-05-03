@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(secret));
 
 app.use(cors({
-  origin: frontendBaseURL,
+  origin: "https://mern-task-manager-kfsnpuvp0-pradeevermas-projects.vercel.app",
   credentials: true,
 }));
 
