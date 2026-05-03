@@ -11,16 +11,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import OAuth from "../components/OAuth";
 
-// ✅ ENV URL
+// ✅ BASE URL
 const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
-// ✅ AXIOS INSTANCE (BEST PRACTICE)
+// ✅ AXIOS INSTANCE
 const api = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // ⚠️ agar cookies use kar raha hai tabhi rakho
 });
 
-// ✅ LOGIN API CALL
+// ✅ LOGIN API
 const loginUser = async (userData) => {
   const res = await api.post("/api/v1/user/login", userData);
   return res.data;
@@ -28,28 +27,23 @@ const loginUser = async (userData) => {
 
 // ✅ VALIDATION
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Minimum 6 characters"),
 });
 
 function Login() {
-  const queryClient = useQueryClient();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
     resolver: zodResolver(loginSchema),
   });
 
-  // ✅ MUTATION
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
@@ -59,77 +53,61 @@ function Login() {
       navigate("/");
     },
     onError: (error) => {
-      console.log("LOGIN ERROR:", error);
-
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Login failed";
-
-      toast.error(message);
+      console.log(error);
+      toast.error(
+        error?.response?.data?.message || "Login failed"
+      );
     },
   });
 
-  const login = (data) => {
+  const onSubmit = (data) => {
     mutation.mutate(data);
   };
 
   return (
     <div className="flex items-center justify-center">
       <div className="mx-auto w-full max-w-lg rounded-xl p-10">
-        <h2 className="text-2xl font-bold m-2 text-blue-600">Login</h2>
+        <h2 className="text-2xl font-bold text-blue-600">Login</h2>
 
         <div className="border border-blue-600 rounded-md">
-          <form onSubmit={handleSubmit(login)}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4 p-4">
-              
-              {/* EMAIL */}
-              <div>
-                <Input
-                  placeholder="Email"
-                  type="email"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
 
-              {/* PASSWORD */}
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+              <Input
+                placeholder="Email"
+                type="email"
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-red-500">{errors.email.message}</p>
+              )}
 
-              {/* BUTTON */}
+              <Input
+                type="password"
+                placeholder="Password"
+                {...register("password")}
+              />
+              {errors.password && (
+                <p className="text-red-500">{errors.password.message}</p>
+              )}
+
               <Button
-                textColor="text-white"
-                type="submit"
                 className="w-full"
-                disabled={isSubmitting || mutation.isPending}
+                type="submit"
+                disabled={mutation.isPending}
               >
-                {mutation.isPending ? "Logging in..." : "Login"}
+                {mutation.isPending ? "Logging..." : "Login"}
               </Button>
             </div>
 
-            <p className="text-center text-black my-4">
-              Dont have an account?{" "}
-              <Link to="/signup" className="text-blue-600 hover:underline">
+            <p className="text-center my-3">
+              Don’t have an account?{" "}
+              <Link to="/signup" className="text-blue-600">
                 Sign up
               </Link>
             </p>
 
-            <OAuth title={"Login with Google"} />
+            <OAuth title="Login with Google" />
           </form>
         </div>
       </div>
