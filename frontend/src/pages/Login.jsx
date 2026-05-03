@@ -11,23 +11,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import OAuth from "../components/OAuth";
 
-const baseURL = import.meta.env.VITE_BACKEND_BASE_URL;
+// ✅ ENV URL
+const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
-// ✅ FIXED LOGIN API
+// ✅ AXIOS INSTANCE (BEST PRACTICE)
+const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true, // ⚠️ agar cookies use kar raha hai tabhi rakho
+});
+
+// ✅ LOGIN API CALL
 const loginUser = async (userData) => {
-  const { data } = await axios.post(
-    `${baseURL}/api/v1/user/login`,
-    userData,
-    {
-      withCredentials: true, // 🔥 IMPORTANT FIX
-    }
-  );
-  return data;
+  const res = await api.post("/api/v1/user/login", userData);
+  return res.data;
 };
 
+// ✅ VALIDATION
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password should be at least 8 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 function Login() {
@@ -47,6 +49,7 @@ function Login() {
     resolver: zodResolver(loginSchema),
   });
 
+  // ✅ MUTATION
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
@@ -56,10 +59,14 @@ function Login() {
       navigate("/");
     },
     onError: (error) => {
-      console.log("LOGIN ERROR:", error); // 🔥 debug
-      toast.error(
-        error.response?.data?.message || "An error occurred during login"
-      );
+      console.log("LOGIN ERROR:", error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Login failed";
+
+      toast.error(message);
     },
   });
 
@@ -71,9 +78,12 @@ function Login() {
     <div className="flex items-center justify-center">
       <div className="mx-auto w-full max-w-lg rounded-xl p-10">
         <h2 className="text-2xl font-bold m-2 text-blue-600">Login</h2>
+
         <div className="border border-blue-600 rounded-md">
           <form onSubmit={handleSubmit(login)}>
             <div className="space-y-4 p-4">
+              
+              {/* EMAIL */}
               <div>
                 <Input
                   placeholder="Email"
@@ -87,6 +97,7 @@ function Login() {
                 )}
               </div>
 
+              {/* PASSWORD */}
               <div>
                 <Input
                   type="password"
@@ -100,13 +111,14 @@ function Login() {
                 )}
               </div>
 
+              {/* BUTTON */}
               <Button
                 textColor="text-white"
                 type="submit"
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isSubmitting || mutation.isPending}
               >
-                {isSubmitting ? "Logging in..." : "Login"}
+                {mutation.isPending ? "Logging in..." : "Login"}
               </Button>
             </div>
 
