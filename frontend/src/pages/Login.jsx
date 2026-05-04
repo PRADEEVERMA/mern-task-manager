@@ -11,21 +11,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import OAuth from "../components/OAuth";
 
-// ✅ BASE URL
 const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
-// ✅ AXIOS INSTANCE
-const api = axios.create({
-  baseURL: BASE_URL,
-});
-
-// ✅ LOGIN API
 const loginUser = async (userData) => {
-  const res = await api.post("/api/v1/user/login", userData);
+  const res = await axios.post(
+    `${BASE_URL}/api/v1/user/login`,
+    userData,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   return res.data;
 };
 
-// ✅ VALIDATION
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Minimum 6 characters"),
@@ -39,7 +39,7 @@ function Login() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
@@ -53,16 +53,12 @@ function Login() {
       navigate("/");
     },
     onError: (error) => {
-      console.log(error);
+      console.log("LOGIN ERROR:", error);
       toast.error(
         error?.response?.data?.message || "Login failed"
       );
     },
   });
-
-  const onSubmit = (data) => {
-    mutation.mutate(data);
-  };
 
   return (
     <div className="flex items-center justify-center">
@@ -70,7 +66,7 @@ function Login() {
         <h2 className="text-2xl font-bold text-blue-600">Login</h2>
 
         <div className="border border-blue-600 rounded-md">
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
             <div className="space-y-4 p-4">
 
               <Input
@@ -91,11 +87,7 @@ function Login() {
                 <p className="text-red-500">{errors.password.message}</p>
               )}
 
-              <Button
-                className="w-full"
-                type="submit"
-                disabled={mutation.isPending}
-              >
+              <Button className="w-full" type="submit">
                 {mutation.isPending ? "Logging..." : "Login"}
               </Button>
             </div>
