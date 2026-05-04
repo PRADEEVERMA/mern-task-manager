@@ -8,30 +8,35 @@ import taskRoutes from "./routes/taskRoutes.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
-const secret = process.env.COOKIE_SECRET;
-const frontendBaseURL = process.env.FRONTEND_BASE_URL;
+// ✅ Railway PORT
+const PORT = process.env.PORT;
 
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser(secret));
+app.use(cookieParser());
 
-app.use(cors({
-  origin: "https://mern-task-manager-kfsnpuvp0-pradeevermas-projects.vercel.app",
-  credentials: true,
-}));
+// ✅ FIXED CORS
+app.use(
+  cors({
+    origin: "https://mern-task-manager-kfsnpuvp0-pradeevermas-projects.vercel.app",
+    credentials: false, // 🔥 IMPORTANT
+  })
+);
 
+// Routes
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 
+// Test route
 app.get("/", (req, res) => {
-  res.json({ message: "Hello, Welcome To Vooshfoods" });
+  res.json({ message: "Hello, Backend is working 🚀" });
 });
 
-// ✅ FIXED START
+// Start server
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server started on PORT: ${PORT}`);
     });
   })
