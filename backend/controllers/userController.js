@@ -4,8 +4,8 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import generateToken from "../utils/generateToken.js";
 import jwt from "jsonwebtoken";
 
-// ✅ SIGNUP
-const signupUser = asyncHandler(async (req, res) => {
+// SIGNUP
+export const signupUser = asyncHandler(async (req, res) => {
   const { firstname, lastname, email, password } = req.body;
 
   if (!firstname || !lastname || !email || !password) {
@@ -38,9 +38,8 @@ const signupUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-// ✅ LOGIN
-const loginUser = asyncHandler(async (req, res) => {
+// LOGIN
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   const existingUser = await userModel.findOne({ email });
@@ -68,9 +67,8 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-// ✅ LOGOUT
-const logoutUser = asyncHandler(async (req, res) => {
+// LOGOUT
+export const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
     httpOnly: true,
     expires: new Date(0),
@@ -79,9 +77,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 });
 
-
-// ✅ GOOGLE LOGIN FIXED
-const google = asyncHandler(async (req, res) => {
+// GOOGLE
+export const google = asyncHandler(async (req, res) => {
   const { name, email, googlePhotoUrl } = req.body;
 
   let user = await userModel.findOne({ email });
@@ -110,16 +107,13 @@ const google = asyncHandler(async (req, res) => {
 
   const { password, ...rest } = user._doc;
 
-  // ✅ FIXED COOKIE
   res
     .status(200)
     .cookie("jwt", token, {
       httpOnly: true,
-      secure: false,       // ❗ localhost fix
-      sameSite: "Lax",     // ❗ important
+      secure: true,
+      sameSite: "None",
       maxAge: 24 * 60 * 60 * 1000,
     })
     .json(rest);
 });
-
-export { signupUser, loginUser, logoutUser, google };
