@@ -11,21 +11,38 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import OAuth from "../components/OAuth";
 
+// ✅ ENV URL
 const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
+// 🚨 DEBUG (very important)
+console.log("🚀 BASE_URL:", BASE_URL);
+
+// ❌ अगर ENV नहीं मिला तो error दिखाओ
+if (!BASE_URL) {
+  console.error("❌ VITE_BACKEND_BASE_URL is missing!");
+}
+
+// ✅ LOGIN API
 const loginUser = async (userData) => {
-  const res = await axios.post(
-    `${BASE_URL}/api/v1/user/login`,
-    userData,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  return res.data;
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/api/v1/user/login`,
+      userData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log("❌ API ERROR:", error?.response || error);
+    throw error;
+  }
 };
 
+// ✅ VALIDATION
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Minimum 6 characters"),
@@ -46,17 +63,24 @@ function Login() {
 
   const mutation = useMutation({
     mutationFn: loginUser,
+
     onSuccess: (data) => {
       dispatch(setCredentials(data));
       queryClient.setQueryData(["user"], data);
-      toast.success("Login successful");
+      toast.success("Login successful ✅");
       navigate("/");
     },
+
     onError: (error) => {
-      console.log("LOGIN ERROR:", error);
-      toast.error(
-        error?.response?.data?.message || "Login failed"
-      );
+      console.log("🔥 LOGIN ERROR FULL:", error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.status === 404
+          ? "❌ API not found (check backend URL)"
+          : "Login failed";
+
+      toast.error(message);
     },
   });
 
@@ -69,6 +93,7 @@ function Login() {
           <form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
             <div className="space-y-4 p-4">
 
+              {/* EMAIL */}
               <Input
                 placeholder="Email"
                 type="email"
@@ -78,6 +103,7 @@ function Login() {
                 <p className="text-red-500">{errors.email.message}</p>
               )}
 
+              {/* PASSWORD */}
               <Input
                 type="password"
                 placeholder="Password"
@@ -87,7 +113,12 @@ function Login() {
                 <p className="text-red-500">{errors.password.message}</p>
               )}
 
-              <Button className="w-full" type="submit">
+              {/* BUTTON */}
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={mutation.isPending}
+              >
                 {mutation.isPending ? "Logging..." : "Login"}
               </Button>
             </div>
